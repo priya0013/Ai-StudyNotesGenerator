@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Study Notes Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="page">
+      <main class="card">
+        <header class="header">
+          <h1>AI Study Notes Generator</h1>
+          <p class="subtitle">Generate structured study notes in seconds.</p>
+        </header>
+
+        <form method="post" class="form" id="notes-form">
+          <label for="topic">Topic</label>
+          <div class="input-row">
+            <input
+              id="topic"
+              name="topic"
+              type="text"
+              placeholder="Arrays, Stack, DBMS Normalization"
+              value="{{ topic }}"
+              required
+            />
+            <button type="submit" id="submit-button">
+              <span class="button-text">Generate Notes</span>
+              <span class="button-loading">Generating...</span>
+            </button>
+          </div>
+          
+         
+        </form>
+
+        {% if error %}
+          <div class="message error">{{ error }}</div>
+        {% endif %}
+
+        <section class="output" aria-live="polite">
+          {% if notes and sections %}
+            <div class="sections">
+              {% for section in sections %}
+                <article class="section">
+                  <h2>{{ section.title }}</h2>
+                  {% for paragraph in section.paragraphs %}
+                    <p>{{ paragraph }}</p>
+                  {% endfor %}
+                  {% if section.list_items %}
+                    <ul>
+                      {% for item in section.list_items %}
+                        <li>{{ item }}</li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                </article>
+              {% endfor %}
+            </div>
+          {% elif notes %}
+            <pre>{{ notes | e }}</pre>
+          {% else %}
+            <p class="placeholder">Your notes will appear here.</p>
+          {% endif %}
+        </section>
+
+        {% if notes %}
+          <form method="post" action="{{ url_for('download') }}" class="download-form">
+            <input type="hidden" name="topic" value="{{ topic }}" />
+            <textarea name="notes" hidden>{{ notes }}</textarea>
+            <button type="submit" class="secondary">Download PDF</button>
+          </form>
+        {% endif %}
+
+        <section class="chat">
+          <h2>Any question/doubt?</h2>
+          {% if chat_error %}
+            <div class="message error">{{ chat_error }}</div>
+          {% endif %}
+          <div class="chat-history">
+            {% if chat_history %}
+              {% for message in chat_history %}
+                <div class="chat-message {{ message.role }}">
+                  <span class="chat-label">{{ "You" if message.role == "user" else "Assistant" }}</span>
+                  <p>{{ message.content }}</p>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="placeholder">Ask a question about the topic to start chatting.</p>
+            {% endif %}
+          </div>
+          <form method="post" action="{{ url_for('chat') }}" class="chat-form">
+            <input type="hidden" name="topic" value="{{ topic }}" />
+            <textarea name="question" rows="3" placeholder="Ask your doubt..." required></textarea>
+            <button type="submit" class="secondary">Ask</button>
+          </form>
+        </section>
+      </main>
+    </div>
+    <script>
+      const form = document.getElementById("notes-form");
+      const button = document.getElementById("submit-button");
+      const topicInput = document.getElementById("topic");
+      const chips = document.querySelectorAll(".chip");
+      if (form && button) {
+        form.addEventListener("submit", () => {
+          button.disabled = true;
+          form.classList.add("is-loading");
+        });
+      }
+      if (topicInput && chips.length > 0) {
+        chips.forEach((chip) => {
+          chip.addEventListener("click", () => {
+            topicInput.value = chip.dataset.topic || "";
+            topicInput.focus();
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
